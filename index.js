@@ -24,8 +24,33 @@ import Shayari from "./models/Shayari.js"; // <-- यहाँ अपनी श�
 // Load environment variables
 dotenv.config();
 
-// Load Firebase service account key
-import serviceAccount from "./serviceAccountKey.json" assert { type: "json" }; // <-- 'assert { type: "json" }' ES Modules के लिए ज़रूरी है
+// --- START: Updated Code for Firebase Service Account Key ---
+// Load Firebase service account key from environment variable
+let serviceAccount;
+try {
+  // Check if the environment variable exists
+  if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+    throw new Error(
+      "FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set."
+    );
+  }
+
+  // Decode the Base64 string and parse it as JSON
+  const serviceAccountJson = Buffer.from(
+    process.env.FIREBASE_SERVICE_ACCOUNT_KEY,
+    "base64"
+  ).toString("utf-8");
+
+  serviceAccount = JSON.parse(serviceAccountJson);
+} catch (error) {
+  console.error(
+    "Failed to load Firebase service account key from environment variable:",
+    error
+  );
+  // Exit the process if the key is not available
+  process.exit(1);
+}
+// --- END: Updated Code ---
 
 // Initialize Firebase Admin SDK
 admin.initializeApp({
@@ -142,9 +167,6 @@ async function sendShayariNotification(
     data: {
       ...dataPayload,
       type: "daily_shayari", // कस्टम डेटा जो ऐप में हैंडल किया जा सकता है
-      // all_shayaris: JSON.stringify(
-      //   allShayaris.map((s) => ({ _id: s._id, content: s.content }))
-      // ), // केवल ID और content भेजें
       random_index: String(randomIndex), // इंडेक्स को स्ट्रिंग के रूप में भेजें
     },
     token: token,
@@ -213,7 +235,6 @@ cron.schedule("* * * * *", async () => {
           notificationTitle,
           shayariText,
           { shayari_id: shayariId },
-          // allShayaris, // पूरी शायरी लिस्ट भेजें
           random
         );
       }

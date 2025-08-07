@@ -190,30 +190,19 @@ async function sendShayariNotification(
 
 // --- हर मिनट नोटिफिकेशन भेजने के लिए क्रॉन जॉब ---
 // '* * * * *' का मतलब है हर मिनट चलेगा
-cron.schedule("* * * * *", async () => {
-  console.log("हर मिनट की शायरी नोटिफिकेशन भेज रहा हूँ...");
+// --- सुबह 10 बजे नोटिफिकेशन भेजने के लिए क्रॉन जॉब ---
+cron.schedule("0 10 * * *", async () => {
+  console.log("सुबह 10 बजे की शायरी नोटिफिकेशन भेज रहा हूँ...");
   if (fcmTokens.length === 0) {
     console.log("कोई FCM टोकन रजिस्टर नहीं है।");
     return;
   }
 
   try {
-    const currentHour = new Date().getHours();
-    console.log(currentHour);
+    const notificationTitle = "Good Morning! ☀️"; // MongoDB से सभी शायरियाँ प्राप्त करें
 
-    let notificationTitle = "आज की शायरी 🌟"; // डिफ़ॉल्ट टाइटल
-
-    if (currentHour === 10) {
-      // सुबह 10 बजे
-      notificationTitle = "Good Morning! ☀️";
-    } else if (currentHour === 21) {
-      // रात 9 बजे (21:00)
-      notificationTitle = "Good Night! 🌙";
-    }
-    // MongoDB से सभी शायरियाँ प्राप्त करें
-    const allShayaris = await Shayari.find({}); // सभी शायरियाँ फेच करें
+    const allShayaris = await Shayari.find({});
     const count = allShayaris.length;
-    console.log(count);
 
     if (count === 0) {
       console.log("डेटाबेस में कोई शायरी नहीं मिली।");
@@ -221,14 +210,56 @@ cron.schedule("* * * * *", async () => {
     }
 
     const random = Math.floor(Math.random() * count);
-    const randomShayari = allShayaris[random]; // एरे से रैंडम शायरी चुनें
-    console.log("random", random);
+    const randomShayari = allShayaris[random];
 
     if (randomShayari) {
-      const shayariText = randomShayari.text || "आज की खूबसूरत शायरी!"; // अपनी शायरी मॉडल के अनुसार फील्ड नेम बदलें
-      const shayariId = randomShayari._id.toString(); // शायरी ID भेजें
+      const shayariText = randomShayari.text || "आज की खूबसूरत शायरी!";
+      const shayariId = randomShayari._id.toString();
 
-      // सभी रजिस्टर किए गए टोकन को नोटिफिकेशन भेजें
+      for (const user of fcmTokens) {
+        await sendShayariNotification(
+          user.fcmToken,
+          notificationTitle,
+          shayariText,
+          { shayari_id: shayariId },
+          random
+        );
+      }
+    } else {
+      console.log("रैंडम शायरी नहीं मिल पाई।");
+    }
+  } catch (error) {
+    console.error("क्रॉन जॉब में त्रुटि:", error);
+  }
+});
+
+// --- दोपहर 2:30 बजे नोटिफिकेशन भेजने के लिए क्रॉन जॉब ---
+// '30 14 * * *' का मतलब है हर दिन दोपहर 2:30 बजे
+cron.schedule("30 14 * * *", async () => {
+  console.log("दोपहर 2:30 बजे की शायरी नोटिफिकेशन भेज रहा हूँ...");
+  if (fcmTokens.length === 0) {
+    console.log("कोई FCM टोकन रजिस्टर नहीं है।");
+    return;
+  }
+
+  try {
+    const notificationTitle = "आज की शायरी 🌟"; // दोपहर के लिए एक डिफ़ॉल्ट टाइटल
+
+    const allShayaris = await Shayari.find({});
+    const count = allShayaris.length;
+
+    if (count === 0) {
+      console.log("डेटाबेस में कोई शायरी नहीं मिली।");
+      return;
+    }
+
+    const random = Math.floor(Math.random() * count);
+    const randomShayari = allShayaris[random];
+
+    if (randomShayari) {
+      const shayariText = randomShayari.text || "आज की खूबसूरत शायरी!";
+      const shayariId = randomShayari._id.toString();
+
       for (const user of fcmTokens) {
         await sendShayariNotification(
           user.fcmToken,

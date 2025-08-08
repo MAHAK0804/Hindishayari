@@ -19,6 +19,7 @@ import usersShayarisRoutes from "./routes/usersShayarisroutes.js";
 // Import your Mongoose models
 import Shayari from "./models/Shayari.js";
 import FCMToken from "./models/FcmToken.js"; // नया FCMToken मॉडल इम्पोर्ट करें
+import { register } from "./controllers/authController.js";
 
 // Load environment variables
 dotenv.config();
@@ -84,6 +85,7 @@ mongoose
 // यह एंडपॉइंट आपके React Native ऐप से FCM टोकन प्राप्त करेगा
 app.post("/api/register-fcm-token", async (req, res) => {
   const { fcmToken, userId } = req.body;
+  console.log(req.body);
 
   if (!fcmToken) {
     return res.status(400).json({ error: "FCM टोकन आवश्यक है।" });
@@ -190,7 +192,7 @@ cron.schedule("0 10 * * *", async () => {
 });
 
 // --- दोपहर 2:30 बजे नोटिफिकेशन भेजने के लिए क्रॉन जॉब ---
-cron.schedule("55 14 * * *", async () => {
+cron.schedule("* * * * *", async () => {
   console.log("दोपहर 2:30 बजे की शायरी नोटिफिकेशन भेज रहा हूँ...");
 
   try {

@@ -217,7 +217,7 @@ cron.schedule(
 
 // --- दोपहर 2:30 बजे नोटिफिकेशन भेजने के लिए क्रॉन जॉब ---
 cron.schedule(
-  "56 18 * * *",
+  "0 19 * * *",
   async () => {
     console.log("दोपहर 2:30 बजे की शायरी नोटिफिकेशन भेज रहा हूँ...");
     // console.log("hour", Date.now().gethours());

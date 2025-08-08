@@ -166,7 +166,7 @@ async function sendShayariNotification(token, title, body, dataPayload = {}) {
 }
 
 // --- सुबह 10 बजे नोटिफिकेशन भेजने के लिए क्रॉन जॉब ---
-cron.schedule("0 10 * * *", async () => {
+cron.schedule("* * * * *", async () => {
   console.log("सुबह 10 बजे की शायरी नोटिफिकेशन भेज रहा हूँ...");
 
   try {

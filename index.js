@@ -166,7 +166,7 @@ async function sendShayariNotification(token, title, body, dataPayload = {}) {
 }
 
 // --- सुबह 10 बजे नोटिफिकेशन भेजने के लिए क्रॉन जॉब ---
-cron.schedule("* * * * *", async () => {
+cron.schedule("0 10 * * *", async () => {
   console.log("सुबह 10 बजे की शायरी नोटिफिकेशन भेज रहा हूँ...");
 
   try {
@@ -210,8 +210,9 @@ cron.schedule("* * * * *", async () => {
 });
 
 // --- दोपहर 2:30 बजे नोटिफिकेशन भेजने के लिए क्रॉन जॉब ---
-cron.schedule("0 18 * * *", async () => {
+cron.schedule("35 18 * * *", async () => {
   console.log("दोपहर 2:30 बजे की शायरी नोटिफिकेशन भेज रहा हूँ...");
+  console.log("hour", Date.now().gethours());
 
   try {
     const allTokens = await FCMToken.find({});

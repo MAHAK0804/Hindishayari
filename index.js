@@ -151,6 +151,16 @@ async function sendShayariNotification(token, title, body, dataPayload = {}) {
     console.log("सफलतापूर्वक नोटिफिकेशन भेजा:", response);
   } catch (error) {
     console.error("नोटिफिकेशन भेजने में त्रुटि:", error);
+    // आपके कोड का वह हिस्सा जो यह एरर आने पर टोकन हटाता है
+    if (
+      error.code === "messaging/invalid-registration-token" ||
+      error.code === "messaging/registration-token-not-registered"
+    ) {
+      console.log(`अमान्य/अप्रयुक्त टोकन हटाया जा रहा है: ${token}`);
+      // डेटाबेस से अमान्य टोकन को हटाएँ
+      await FCMToken.deleteOne({ fcmToken: token });
+      console.log(`टोकन ${token} डेटाबेस से हटाया गया।`);
+    }
     // ... बाकी त्रुटि हैंडलिंग कोड
   }
 }

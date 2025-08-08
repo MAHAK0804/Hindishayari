@@ -84,8 +84,8 @@ mongoose
 // --- API एंडपॉइंट: FCM टोकन रजिस्टर करें ---
 // यह एंडपॉइंट आपके React Native ऐप से FCM टोकन प्राप्त करेगा
 app.post("/api/register-fcm-token", async (req, res) => {
-  const { fcmToken, userId } = req.body;
-  console.log(req.body);
+  const { fcmToken } = req.body;
+  console.log("fcmToken", req.body);
 
   if (!fcmToken) {
     return res.status(400).json({ error: "FCM टोकन आवश्यक है।" });
@@ -97,9 +97,9 @@ app.post("/api/register-fcm-token", async (req, res) => {
     };
 
     // केवल तभी userId को अपडेट करें जब वह रिक्वेस्ट में मौजूद हो
-    if (userId) {
-      updatePayload.userId = userId;
-    }
+    // if (userId) {
+    //   updatePayload.userId = userId;
+    // }
 
     // टोकन को डेटाबेस में खोजें और अपडेट करें या नया बनाएं
     await FCMToken.findOneAndUpdate({ fcmToken: fcmToken }, updatePayload, {

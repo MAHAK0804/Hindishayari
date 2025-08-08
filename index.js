@@ -191,7 +191,7 @@ async function sendShayariNotification(
 // --- हर मिनट नोटिफिकेशन भेजने के लिए क्रॉन जॉब ---
 // '* * * * *' का मतलब है हर मिनट चलेगा
 // --- सुबह 10 बजे नोटिफिकेशन भेजने के लिए क्रॉन जॉब ---
-cron.schedule("0 10 * * *", async () => {
+cron.schedule("* * * * *", async () => {
   console.log("सुबह 10 बजे की शायरी नोटिफिकेशन भेज रहा हूँ...");
   if (fcmTokens.length === 0) {
     console.log("कोई FCM टोकन रजिस्टर नहीं है।");

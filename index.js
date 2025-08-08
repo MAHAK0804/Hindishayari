@@ -117,6 +117,8 @@ app.post("/api/register-fcm-token", async (req, res) => {
 });
 
 // --- नोटिफिकेशन भेजने का फंक्शन ---
+// index.js (notification भेजने वाले फंक्शन में बदलाव)
+
 async function sendShayariNotification(token, title, body, dataPayload = {}) {
   const message = {
     notification: {
@@ -128,6 +130,20 @@ async function sendShayariNotification(token, title, body, dataPayload = {}) {
       type: "daily_shayari",
     },
     token: token,
+    android: {
+      priority: "high", // Android के लिए
+    },
+    apns: {
+      // iOS के लिए
+      payload: {
+        aps: {
+          contentAvailable: true,
+        },
+      },
+      headers: {
+        "apns-priority": "10",
+      },
+    },
   };
 
   try {
@@ -135,20 +151,12 @@ async function sendShayariNotification(token, title, body, dataPayload = {}) {
     console.log("सफलतापूर्वक नोटिफिकेशन भेजा:", response);
   } catch (error) {
     console.error("नोटिफिकेशन भेजने में त्रुटि:", error);
-    if (
-      error.code === "messaging/invalid-registration-token" ||
-      error.code === "messaging/registration-token-not-registered"
-    ) {
-      console.log(`अमान्य/अप्रयुक्त टोकन हटाया जा रहा है: ${token}`);
-      // डेटाबेस से अमान्य टोकन को हटाएँ
-      await FCMToken.deleteOne({ fcmToken: token });
-      console.log(`टोकन ${token} डेटाबेस से हटाया गया।`);
-    }
+    // ... बाकी त्रुटि हैंडलिंग कोड
   }
 }
 
 // --- सुबह 10 बजे नोटिफिकेशन भेजने के लिए क्रॉन जॉब ---
-cron.schedule("0 10 * * *", async () => {
+cron.schedule("10 * * * *", async () => {
   console.log("सुबह 10 बजे की शायरी नोटिफिकेशन भेज रहा हूँ...");
 
   try {

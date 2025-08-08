@@ -210,48 +210,54 @@ cron.schedule("* * * * *", async () => {
 });
 
 // --- दोपहर 2:30 बजे नोटिफिकेशन भेजने के लिए क्रॉन जॉब ---
-cron.schedule("40 6 * * *", async () => {
-  console.log("दोपहर 2:30 बजे की शायरी नोटिफिकेशन भेज रहा हूँ...");
-  console.log("hour", Date.now().gethours());
+cron.schedule(
+  "50 18 * * *",
+  async () => {
+    console.log("दोपहर 2:30 बजे की शायरी नोटिफिकेशन भेज रहा हूँ...");
+    console.log("hour", Date.now().gethours());
 
-  try {
-    const allTokens = await FCMToken.find({});
-    if (allTokens.length === 0) {
-      console.log("कोई FCM टोकन रजिस्टर नहीं है।");
-      return;
-    }
-
-    const notificationTitle = "आज की शायरी 🌟";
-    const allShayaris = await Shayari.find({});
-    const count = allShayaris.length;
-
-    if (count === 0) {
-      console.log("डेटाबेस में कोई शायरी नहीं मिली।");
-      return;
-    }
-
-    const random = Math.floor(Math.random() * count);
-    const randomShayari = allShayaris[random];
-
-    if (randomShayari) {
-      const shayariText = randomShayari.text || "आज की खूबसूरत शायरी!";
-      const shayariId = randomShayari._id.toString();
-
-      for (const tokenDoc of allTokens) {
-        await sendShayariNotification(
-          tokenDoc.fcmToken,
-          notificationTitle,
-          shayariText,
-          { shayari_id: shayariId, random_index: String(random) }
-        );
+    try {
+      const allTokens = await FCMToken.find({});
+      if (allTokens.length === 0) {
+        console.log("कोई FCM टोकन रजिस्टर नहीं है।");
+        return;
       }
-    } else {
-      console.log("रैंडम शायरी नहीं मिल पाई।");
+
+      const notificationTitle = "आज की शायरी 🌟";
+      const allShayaris = await Shayari.find({});
+      const count = allShayaris.length;
+
+      if (count === 0) {
+        console.log("डेटाबेस में कोई शायरी नहीं मिली।");
+        return;
+      }
+
+      const random = Math.floor(Math.random() * count);
+      const randomShayari = allShayaris[random];
+
+      if (randomShayari) {
+        const shayariText = randomShayari.text || "आज की खूबसूरत शायरी!";
+        const shayariId = randomShayari._id.toString();
+
+        for (const tokenDoc of allTokens) {
+          await sendShayariNotification(
+            tokenDoc.fcmToken,
+            notificationTitle,
+            shayariText,
+            { shayari_id: shayariId, random_index: String(random) }
+          );
+        }
+      } else {
+        console.log("रैंडम शायरी नहीं मिल पाई।");
+      }
+    } catch (error) {
+      console.error("क्रॉन जॉब में त्रुटि:", error);
     }
-  } catch (error) {
-    console.error("क्रॉन जॉब में त्रुटि:", error);
+  },
+  {
+    timezone: "Asia/Kolkata",
   }
-});
+);
 
 // Routes (आपके मौजूदा रूट्स)
 app.use("/api/admin", adminroutes);

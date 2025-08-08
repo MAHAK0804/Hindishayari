@@ -7,7 +7,6 @@ import fileUpload from "express-fileupload";
 import admin from "firebase-admin"; // Firebase Admin SDK
 import bodyParser from "body-parser"; // Body-parser for JSON parsing
 import cron from "node-cron"; // Node-cron for scheduling tasks
-import fs from "fs"; // File system for token storage (for this example)
 
 // Routes imports
 import categoryRoutes from "./routes/categoryRoutes.js";
@@ -17,9 +16,9 @@ import dashboardRoutes from "./routes/dashboardRoutes.js";
 import usersRoutes from "./routes/userroutes.js";
 import usersShayarisRoutes from "./routes/usersShayarisroutes.js";
 
-// Import your Shayari model (assuming it exists)
-// Make sure the path is correct for your project structure
-import Shayari from "./models/Shayari.js"; // <-- यहाँ अपनी शायरी मॉडल फाइल का पाथ दें
+// Import your Mongoose models
+import Shayari from "./models/Shayari.js";
+import FCMToken from "./models/FcmToken.js"; // नया FCMToken मॉडल इम्पोर्ट करें
 
 // Load environment variables
 dotenv.config();
@@ -72,35 +71,6 @@ app.use(express.json()); // JSON रिक्वेस्ट बॉडी को
 app.use(fileUpload()); // फाइल अपलोड हैंडल करने के लिए
 app.use(bodyParser.json()); // FCM टोकन रजिस्ट्रेशन के लिए JSON बॉडी को पार्स करने के लिए
 
-// --- FCM टोकन स्टोरेज (इस उदाहरण के लिए फाइल का उपयोग) ---
-// उत्पादन (production) में, आपको इन टोकन को डेटाबेस (जैसे MongoDB) में स्टोर करना चाहिए।
-const FCM_TOKENS_FILE = "fcm_tokens.json";
-let fcmTokens = [];
-
-// फाइल से FCM टोकन लोड करें जब सर्वर शुरू हो
-if (fs.existsSync(FCM_TOKENS_FILE)) {
-  try {
-    fcmTokens = JSON.parse(fs.readFileSync(FCM_TOKENS_FILE, "utf8"));
-    console.log("Loaded FCM tokens:", fcmTokens.length);
-  } catch (error) {
-    console.error("Error loading FCM tokens from file:", error);
-    fcmTokens = []; // अगर फाइल corrupt है तो खाली एरे से शुरू करें
-  }
-}
-
-// FCM टोकन को फाइल में सेव करें
-const saveTokens = () => {
-  try {
-    fs.writeFileSync(
-      FCM_TOKENS_FILE,
-      JSON.stringify(fcmTokens, null, 2),
-      "utf8"
-    );
-  } catch (error) {
-    console.error("Error saving FCM tokens to file:", error);
-  }
-};
-
 // Connect to MongoDB
 mongoose
   .connect(process.env.MONGO_URI, {
@@ -112,53 +82,40 @@ mongoose
 
 // --- API एंडपॉइंट: FCM टोकन रजिस्टर करें ---
 // यह एंडपॉइंट आपके React Native ऐप से FCM टोकन प्राप्त करेगा
-app.post("/api/register-fcm-token", (req, res) => {
-  const { fcmToken, userId } = req.body; // userId को आपके ऐप से भेजा जाना चाहिए
+app.post("/api/register-fcm-token", async (req, res) => {
+  const { fcmToken, userId } = req.body;
 
   if (!fcmToken) {
     return res.status(400).json({ error: "FCM टोकन आवश्यक है।" });
   }
 
-  // डुप्लीकेट टोकन से बचें और मौजूदा टोकन को अपडेट करें
-  const existingTokenIndex = fcmTokens.findIndex(
-    (t) => t.fcmToken === fcmToken
-  );
-  if (existingTokenIndex === -1) {
-    fcmTokens.push({
-      fcmToken,
-      userId,
-      registeredAt: new Date().toISOString(),
-    });
-    saveTokens();
-    console.log(
-      `नया FCM टोकन रजिस्टर हुआ: ${fcmToken} (यूज़र: ${userId || "अज्ञात"})`
-    );
-    res.status(200).json({ message: "FCM टोकन सफलतापूर्वक रजिस्टर हुआ।" });
-  } else {
-    // अगर टोकन पहले से है, तो उसे अपडेट करें (जैसे lastSeen टाइम)
-    fcmTokens[existingTokenIndex].registeredAt = new Date().toISOString();
-    // आप चाहें तो userId भी अपडेट कर सकते हैं अगर यह बदलता है
-    if (userId && fcmTokens[existingTokenIndex].userId !== userId) {
-      fcmTokens[existingTokenIndex].userId = userId;
+  try {
+    const updatePayload = {
+      lastUpdatedAt: new Date(),
+    };
+
+    // केवल तभी userId को अपडेट करें जब वह रिक्वेस्ट में मौजूद हो
+    if (userId) {
+      updatePayload.userId = userId;
     }
-    saveTokens();
-    res
-      .status(200)
-      .json({ message: "FCM टोकन पहले से मौजूद है और अपडेट हुआ।" });
+
+    // टोकन को डेटाबेस में खोजें और अपडेट करें या नया बनाएं
+    await FCMToken.findOneAndUpdate({ fcmToken: fcmToken }, updatePayload, {
+      upsert: true,
+      new: true,
+      setDefaultsOnInsert: true,
+    });
+
+    console.log(`FCM टोकन सफलतापूर्वक रजिस्टर/अपडेट हुआ: ${fcmToken}`);
+    res.status(200).json({ message: "FCM टोकन सफलतापूर्वक रजिस्टर हुआ।" });
+  } catch (error) {
+    console.error("FCM टोकन रजिस्टर करने में त्रुटि:", error);
+    res.status(500).json({ error: "सर्वर त्रुटि" });
   }
 });
 
 // --- नोटिफिकेशन भेजने का फंक्शन ---
-// अब यह पूरी शायरी लिस्ट और रैंडम इंडेक्स भी स्वीकार करता है
-async function sendShayariNotification(
-  token,
-  title,
-  body,
-  dataPayload = {},
-  allShayaris = [],
-  randomIndex = -1
-) {
-  // FCM डेटा पेलोड में केवल स्ट्रिंग वैल्यू स्वीकार करता है, इसलिए एरे को JSON स्ट्रिंगिफ़ाई करें
+async function sendShayariNotification(token, title, body, dataPayload = {}) {
   const message = {
     notification: {
       title: title,
@@ -166,8 +123,7 @@ async function sendShayariNotification(
     },
     data: {
       ...dataPayload,
-      type: "daily_shayari", // कस्टम डेटा जो ऐप में हैंडल किया जा सकता है
-      random_index: String(randomIndex), // इंडेक्स को स्ट्रिंग के रूप में भेजें
+      type: "daily_shayari",
     },
     token: token,
   };
@@ -182,25 +138,26 @@ async function sendShayariNotification(
       error.code === "messaging/registration-token-not-registered"
     ) {
       console.log(`अमान्य/अप्रयुक्त टोकन हटाया जा रहा है: ${token}`);
-      fcmTokens = fcmTokens.filter((t) => t.fcmToken !== token);
-      saveTokens();
+      // डेटाबेस से अमान्य टोकन को हटाएँ
+      await FCMToken.deleteOne({ fcmToken: token });
+      console.log(`टोकन ${token} डेटाबेस से हटाया गया।`);
     }
   }
 }
 
-// --- हर मिनट नोटिफिकेशन भेजने के लिए क्रॉन जॉब ---
-// '* * * * *' का मतलब है हर मिनट चलेगा
 // --- सुबह 10 बजे नोटिफिकेशन भेजने के लिए क्रॉन जॉब ---
 cron.schedule("0 10 * * *", async () => {
   console.log("सुबह 10 बजे की शायरी नोटिफिकेशन भेज रहा हूँ...");
-  if (fcmTokens.length === 0) {
-    console.log("कोई FCM टोकन रजिस्टर नहीं है।");
-    return;
-  }
 
   try {
-    const notificationTitle = "Good Morning! ☀️"; // MongoDB से सभी शायरियाँ प्राप्त करें
+    // डेटाबेस से सभी FCM टोकन प्राप्त करें
+    const allTokens = await FCMToken.find({});
+    if (allTokens.length === 0) {
+      console.log("कोई FCM टोकन रजिस्टर नहीं है।");
+      return;
+    }
 
+    const notificationTitle = "Good Morning! ☀️";
     const allShayaris = await Shayari.find({});
     const count = allShayaris.length;
 
@@ -216,13 +173,12 @@ cron.schedule("0 10 * * *", async () => {
       const shayariText = randomShayari.text || "आज की खूबसूरत शायरी!";
       const shayariId = randomShayari._id.toString();
 
-      for (const user of fcmTokens) {
+      for (const tokenDoc of allTokens) {
         await sendShayariNotification(
-          user.fcmToken,
+          tokenDoc.fcmToken,
           notificationTitle,
           shayariText,
-          { shayari_id: shayariId },
-          random
+          { shayari_id: shayariId, random_index: String(random) }
         );
       }
     } else {
@@ -234,17 +190,17 @@ cron.schedule("0 10 * * *", async () => {
 });
 
 // --- दोपहर 2:30 बजे नोटिफिकेशन भेजने के लिए क्रॉन जॉब ---
-// '30 14 * * *' का मतलब है हर दिन दोपहर 2:30 बजे
-cron.schedule("30 14 * * *", async () => {
+cron.schedule("55 14 * * *", async () => {
   console.log("दोपहर 2:30 बजे की शायरी नोटिफिकेशन भेज रहा हूँ...");
-  if (fcmTokens.length === 0) {
-    console.log("कोई FCM टोकन रजिस्टर नहीं है।");
-    return;
-  }
 
   try {
-    const notificationTitle = "आज की शायरी 🌟"; // दोपहर के लिए एक डिफ़ॉल्ट टाइटल
+    const allTokens = await FCMToken.find({});
+    if (allTokens.length === 0) {
+      console.log("कोई FCM टोकन रजिस्टर नहीं है।");
+      return;
+    }
 
+    const notificationTitle = "आज की शायरी 🌟";
     const allShayaris = await Shayari.find({});
     const count = allShayaris.length;
 
@@ -260,13 +216,12 @@ cron.schedule("30 14 * * *", async () => {
       const shayariText = randomShayari.text || "आज की खूबसूरत शायरी!";
       const shayariId = randomShayari._id.toString();
 
-      for (const user of fcmTokens) {
+      for (const tokenDoc of allTokens) {
         await sendShayariNotification(
-          user.fcmToken,
+          tokenDoc.fcmToken,
           notificationTitle,
           shayariText,
-          { shayari_id: shayariId },
-          random
+          { shayari_id: shayariId, random_index: String(random) }
         );
       }
     } else {

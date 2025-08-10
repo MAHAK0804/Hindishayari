@@ -82,8 +82,6 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log("MongoDB connection error:", err));
 
-// --- API एंडपॉइंट: FCM टोकन रजिस्टर करें ---
-// यह एंडपॉइंट आपके React Native ऐप से FCM टोकन प्राप्त करेगा
 app.post("/api/register-fcm-token", async (req, res) => {
   const { fcmToken } = req.body;
   console.log("fcmToken", req.body);
@@ -97,12 +95,6 @@ app.post("/api/register-fcm-token", async (req, res) => {
       lastUpdatedAt: new Date(),
     };
 
-    // केवल तभी userId को अपडेट करें जब वह रिक्वेस्ट में मौजूद हो
-    // if (userId) {
-    //   updatePayload.userId = userId;
-    // }
-
-    // टोकन को डेटाबेस में खोजें और अपडेट करें या नया बनाएं
     await FCMToken.findOneAndUpdate({ fcmToken: fcmToken }, updatePayload, {
       upsert: true,
       new: true,
@@ -117,156 +109,7 @@ app.post("/api/register-fcm-token", async (req, res) => {
   }
 });
 
-// --- नोटिफिकेशन भेजने का फंक्शन ---
-// index.js (notification भेजने वाले फंक्शन में बदलाव)
-
-// async function sendShayariNotification(token, title, body, dataPayload = {}) {
-//   const message = {
-//     notification: {
-//       title: title,
-//       body: body,
-//     },
-//     data: {
-//       ...dataPayload,
-//       type: "daily_shayari",
-//     },
-//     token: token,
-//     android: {
-//       priority: "high", // Android के लिए
-//     },
-//     apns: {
-//       // iOS के लिए
-//       payload: {
-//         aps: {
-//           contentAvailable: true,
-//         },
-//       },
-//       headers: {
-//         "apns-priority": "10",
-//       },
-//     },
-//   };
-
-//   try {
-//     const response = await admin.messaging().send(message);
-//     console.log("सफलतापूर्वक नोटिफिकेशन भेजा:", response);
-//   } catch (error) {
-//     console.error("नोटिफिकेशन भेजने में त्रुटि:", error);
-//     // आपके कोड का वह हिस्सा जो यह एरर आने पर टोकन हटाता है
-//     if (
-//       error.code === "messaging/invalid-registration-token" ||
-//       error.code === "messaging/registration-token-not-registered"
-//     ) {
-//       console.log(`अमान्य/अप्रयुक्त टोकन हटाया जा रहा है: ${token}`);
-//       // डेटाबेस से अमान्य टोकन को हटाएँ
-//       await FCMToken.deleteOne({ fcmToken: token });
-//       console.log(`टोकन ${token} डेटाबेस से हटाया गया।`);
-//     }
-//     // ... बाकी त्रुटि हैंडलिंग कोड
-//   }
-// }
-
-// // --- सुबह 10 बजे नोटिफिकेशन भेजने के लिए क्रॉन जॉब ---
-// cron.schedule(
-//   "0 10 * * *",
-//   async () => {
-//     console.log("सुबह 10 बजे की शायरी नोटिफिकेशन भेज रहा हूँ...");
-
-//     try {
-//       // डेटाबेस से सभी FCM टोकन प्राप्त करें
-//       const allTokens = await FCMToken.find({});
-//       if (allTokens.length === 0) {
-//         console.log("कोई FCM टोकन रजिस्टर नहीं है।");
-//         return;
-//       }
-
-//       const notificationTitle = "Good Morning! ☀️";
-//       const allShayaris = await Shayari.find({});
-//       const count = allShayaris.length;
-
-//       if (count === 0) {
-//         console.log("डेटाबेस में कोई शायरी नहीं मिली।");
-//         return;
-//       }
-
-//       const random = Math.floor(Math.random() * count);
-//       const randomShayari = allShayaris[random];
-
-//       if (randomShayari) {
-//         const shayariText = randomShayari.text || "आज की खूबसूरत शायरी!";
-//         const shayariId = randomShayari._id.toString();
-
-//         for (const tokenDoc of allTokens) {
-//           await sendShayariNotification(
-//             tokenDoc.fcmToken,
-//             notificationTitle,
-//             shayariText,
-//             { shayari_id: shayariId, random_index: String(random) }
-//           );
-//         }
-//       } else {
-//         console.log("रैंडम शायरी नहीं मिल पाई।");
-//       }
-//     } catch (error) {
-//       console.error("क्रॉन जॉब में त्रुटि:", error);
-//     }
-//   },
-//   {
-//     timezone: "Asia/Kolkata",
-//   }
-// );
-
-// // --- दोपहर 2:30 बजे नोटिफिकेशन भेजने के लिए क्रॉन जॉब ---
-// cron.schedule(
-//   "10 19 * * *",
-//   async () => {
-//     console.log("दोपहर 2:30 बजे की शायरी नोटिफिकेशन भेज रहा हूँ...");
-//     // console.log("hour", Date.now().gethours());
-
-//     try {
-//       const allTokens = await FCMToken.find({});
-//       if (allTokens.length === 0) {
-//         console.log("कोई FCM टोकन रजिस्टर नहीं है।");
-//         return;
-//       }
-
-//       const notificationTitle = "आज की शायरी 🌟";
-//       const allShayaris = await Shayari.find({});
-//       const count = allShayaris.length;
-
-//       if (count === 0) {
-//         console.log("डेटाबेस में कोई शायरी नहीं मिली।");
-//         return;
-//       }
-
-//       const random = Math.floor(Math.random() * count);
-//       const randomShayari = allShayaris[random];
-
-//       if (randomShayari) {
-//         const shayariText = randomShayari.text || "आज की खूबसूरत शायरी!";
-//         const shayariId = randomShayari._id.toString();
-
-//         for (const tokenDoc of allTokens) {
-//           await sendShayariNotification(
-//             tokenDoc.fcmToken,
-//             notificationTitle,
-//             shayariText,
-//             { shayari_id: shayariId, random_index: String(random) }
-//           );
-//         }
-//       } else {
-//         console.log("रैंडम शायरी नहीं मिल पाई।");
-//       }
-//     } catch (error) {
-//       console.error("क्रॉन जॉब में त्रुटि:", error);
-//     }
-//   },
-//   {
-//     timezone: "Asia/Kolkata",
-//   }
-// );
-
-cron.schedule("0 19 * * *", sendRandomShayari, { timezone: "Asia/Kolkata" });
+cron.schedule("*/5 * * * *", sendRandomShayari, { timezone: "Asia/Kolkata" });
 // Routes (आपके मौजूदा रूट्स)
 app.use("/api/admin", adminroutes);
 app.use("/api/dashboard", dashboardRoutes);

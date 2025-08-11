@@ -11,22 +11,17 @@ export async function sendShayariNotification(
   dataPayload = {}
 ) {
   const message = {
-    notification: { title, body },
+    notification: {
+      title: "Random Shayari",
+      body: shayariText,
+    },
     data: {
       ...dataPayload,
-      click_action: "FLUTTER_NOTIFICATION_CLICK", // Android tap event
     },
-    token,
     android: {
       priority: "high",
-      notification: {
-        channelId: "daily_shayari_channel", // Frontend में match होना चाहिए
-      },
     },
-    apns: {
-      headers: { "apns-priority": "10" },
-      payload: { aps: { sound: "default" } },
-    },
+    token,
   };
 
   try {

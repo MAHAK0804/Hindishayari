@@ -15,7 +15,7 @@ import adminroutes from "./routes/authroutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import usersRoutes from "./routes/userroutes.js";
 import usersShayarisRoutes from "./routes/usersShayarisroutes.js";
-
+import notificationRoutes from "./routes/notification.js";
 // Import your Mongoose models
 import Shayari from "./models/Shayari.js";
 import FCMToken from "./models/FcmToken.js"; // नया FCMToken मॉडल इम्पोर्ट करें
@@ -109,7 +109,7 @@ app.post("/api/register-fcm-token", async (req, res) => {
   }
 });
 
-cron.schedule("*/5 * * * *", sendRandomShayari, { timezone: "Asia/Kolkata" });
+app.use("/api", notificationRoutes);
 // Routes (आपके मौजूदा रूट्स)
 app.use("/api/admin", adminroutes);
 app.use("/api/dashboard", dashboardRoutes);

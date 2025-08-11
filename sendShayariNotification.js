@@ -12,8 +12,8 @@ export async function sendShayariNotification(
 ) {
   const message = {
     notification: {
-      title: "Random Shayari",
-      body: shayariText,
+      title: title,
+      body: body,
     },
     data: {
       ...dataPayload,
@@ -50,7 +50,7 @@ export async function sendRandomShayari() {
     }
 
     const allShayaris = await Shayari.find({});
-    console.log("Shayari length", allShayaris);
+    console.log("Shayari length", allShayaris.length);
 
     if (!allShayaris.length) {
       console.log("❌ No Shayaris found in DB.");

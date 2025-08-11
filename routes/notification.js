@@ -1,6 +1,6 @@
 // routes/notification.js
 import express from "express";
-import { sendRandomShayari } from "../sendShayariNotification";
+import { sendRandomShayari } from "../sendShayariNotification.js";
 
 const router = express.Router();
 

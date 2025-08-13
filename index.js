@@ -117,6 +117,44 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/shayaris", shayariRoutes);
 app.use("/api/users/auth", usersRoutes);
 app.use("/api/users/shayaris", usersShayarisRoutes);
+const bgImages = [
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg1.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg2.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg3.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg4.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg5.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg6.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg7.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg8.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg9.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg10.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg11.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg12.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg13.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg14.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg15.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg16.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg17.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg18.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg19.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg21.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg22.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg23.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg24.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg25.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg26.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg27.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg28.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg29.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg30.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg31.jpeg",
+  "https://shayaripoetry.s3.ap-south-1.amazonaws.com/bgImages/bg32.jpeg",
+];
+
+// API route
+app.get("/api/bg-images", (req, res) => {
+  res.json(bgImages);
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

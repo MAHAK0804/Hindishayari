@@ -5,7 +5,7 @@ import sendOtp from "../utils/sendOtp.js";
 const router = express.Router();
 
 const generateOTP = (email, name) =>
-  email === "jhingurlab@gmail.com"
+  email === "test.jhingurlab@gmail.com"
     ? "123456"
     : Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -20,7 +20,7 @@ router.post("/request-otp", async (req, res) => {
 
   const otp = generateOTP(email, name);
   const otpExpires =
-    email === "jhingurlab@gmail.com" ? null : Date.now() + 5 * 60 * 1000;
+    email === "test.jhingurlab@gmail.com" ? null : Date.now() + 5 * 60 * 1000;
   // const expiryTimeFormatted = new Date(otpExpires).toLocaleString();
   // const remainingSeconds = Math.floor((otpExpires - Date.now()) / 1000);
   // const minutes = String(Math.floor(remainingSeconds / 60)).padStart(2, "0");
@@ -83,7 +83,7 @@ router.post("/verify-otp", async (req, res) => {
   }
 
   user.name = name;
-  user.otp = email === "jhingurlab@gmail.com" ? "123456" : null;
+  user.otp = email === "test.jhingurlab@gmail.com" ? "123456" : null;
   user.otpExpires = null;
   user.isVerifed = true;
   await user.save();

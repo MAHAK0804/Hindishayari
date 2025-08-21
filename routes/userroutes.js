@@ -46,6 +46,7 @@ router.post("/request-otp", async (req, res) => {
   user.otp = otp;
   user.otpExpires = otpExpires;
   user.isVerifed = false;
+  console.log(otp);
 
   await user.save();
 
@@ -63,18 +64,26 @@ router.post("/request-otp", async (req, res) => {
 });
 
 // Step 2: Verify OTP
+// Step 2: Verify OTP
 router.post("/verify-otp", async (req, res) => {
   const { name, email, phone, otp } = req.body;
 
   let user;
   if (email) {
-    user = await Users.findOne({ email: email });
+    user = await Users.findOne({ email });
   } else if (phone) {
-    user = await Users.findOne({ phone: phone });
+    user = await Users.findOne({ phone });
   }
-  if (!user || user.otp !== otp || user.otpExpires < Date.now()) {
+
+  // ✅ Dummy user ke liye OTP kabhi expire nahi hoga
+  if (
+    !user ||
+    user.otp !== otp ||
+    (user.otpExpires && user.otpExpires < Date.now())
+  ) {
     return res.status(400).json({ message: "Invalid or expired OTP" });
   }
+
   user.name = name;
   user.otp =
     email === "jhingurlab@gmail.com" && name === "jhingur" ? "123456" : null;

@@ -41,6 +41,7 @@ try {
     process.env.FIREBASE_SERVICE_ACCOUNT_KEY,
     "base64"
   ).toString("utf-8");
+  console.log(serviceAccountJson);
 
   serviceAccount = JSON.parse(serviceAccountJson);
 } catch (error) {
